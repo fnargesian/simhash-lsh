@@ -1,2 +1,2 @@
 # simhash-lsh
-Cosine LSH in Golang
+Cosine/Simhash LSH in Golang
