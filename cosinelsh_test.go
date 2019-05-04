@@ -71,7 +71,7 @@ func Test_CosineLshQueryShouldBeSortedByL2(t *testing.T) {
 			}
 			for _, foundKey := range results {
 
-				dist := EuclideanDistSquare(embs[i], foundKey.Vector)
+				dist := euclideanDistSquare(embs[i], foundKey.Vector)
 
 				if dist < lastDistance {
 					t.Fatal("query should sort vectors by distance")
@@ -87,7 +87,7 @@ func BenchmarkCosineLshQueryNaive(b *testing.B) {
 	b.StopTimer()
 	lshSize := 90000
 	vecSize := 512
-	lsh := NewCosineLsh(512, 5, 10)
+	lsh := NewCosineLsh(vecSize, 5, 10)
 	embs := randomEmbeddings(lshSize, vecSize, 1.0)
 	for i, e := range embs {
 		lsh.Insert(e, strconv.Itoa(i))

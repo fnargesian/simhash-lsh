@@ -1,7 +1,6 @@
 package simhashlsh
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"sync"
@@ -11,10 +10,7 @@ type Point []float64
 
 type DistanceFunc func(p1 Point, p2 Point) float64
 
-func EuclideanDistSquare(p1 Point, p2 Point) (sum float64) {
-	if len(p1) != len(p2) {
-		panic(fmt.Errorf("vectors should be same len. len(p1) = %v, len(p2) = %v", len(p1), len(p2)))
-	}
+func euclideanDistSquare(p1 Point, p2 Point) (sum float64) {
 	for i := range p1 {
 		d := p2[i] - p1[i]
 		sum += d * d
@@ -45,7 +41,7 @@ func newCosineLshParam(dim, l, m, h int, hyperplanes [][]float64) *cosineLshPara
 		m:           m,
 		hyperplanes: hyperplanes,
 		h:           h,
-		dFunc:       EuclideanDistSquare,
+		dFunc:       euclideanDistSquare,
 	}
 }
 
