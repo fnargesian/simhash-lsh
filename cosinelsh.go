@@ -6,11 +6,10 @@ import (
 	"sync"
 )
 
-type Point []float64
+// DistanceFunc is a function for calculate distance between two vectors
+type DistanceFunc func(p1 []float64, p2 []float64) float64
 
-type DistanceFunc func(p1 Point, p2 Point) float64
-
-func euclideanDistSquare(p1 Point, p2 Point) (sum float64) {
+func euclideanDistSquare(p1 []float64, p2 []float64) (sum float64) {
 	for i := range p1 {
 		d := p2[i] - p1[i]
 		sum += d * d
@@ -59,6 +58,8 @@ func (clsh *cosineLshParam) hash(point []float64) []hashTableKey {
 	return hvs
 }
 
+// CosineLsh is an implementation of Random projection LSH
+// https://en.wikipedia.org/wiki/Locality-sensitive_hashing#Random_projection
 type CosineLsh struct {
 	// Param type
 	*cosineLshParam
@@ -98,7 +99,7 @@ func (index *CosineLsh) Insert(point []float64, id string) {
 			if _, exist := table[hv]; !exist {
 				table[hv] = make(hashTableBucket, 0)
 			}
-			table[hv] = append(table[hv], BucketItem{Vector: point, ID: id})
+			table[hv] = append(table[hv], Point{Vector: point, ID: id})
 			wg.Done()
 		}(table, hv)
 	}
@@ -112,11 +113,11 @@ type distanceTuple struct {
 
 // Query finds the ids of approximate nearest neighbour candidates,
 // in un-sorted order, given the query point.
-func (index *CosineLsh) Query(q []float64) []BucketItem {
+func (index *CosineLsh) Query(q []float64) []Point {
 	// Apply hash functions
 	hvs := index.toBasicHashTableKeys(index.hash(q))
 	// Keep track of keys seen
-	seen := make(map[string]BucketItem)
+	seen := make(map[string]Point)
 	for i, table := range index.tables {
 		if candidates, exist := table[hvs[i]]; exist {
 			for _, id := range candidates {
@@ -139,7 +140,7 @@ func (index *CosineLsh) Query(q []float64) []BucketItem {
 	})
 
 	// Collect results
-	values := make([]BucketItem, 0, len(seen))
+	values := make([]Point, 0, len(seen))
 	for _, distProduct := range distances {
 		values = append(values, seen[distProduct.id])
 	}
