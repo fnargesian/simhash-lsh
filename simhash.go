@@ -11,8 +11,9 @@ type hashTableKey []uint8
 
 type BucketItem struct {
 	Vector Point
-	ID string
+	ID     string
 }
+
 // Value is an index into the input dataset.
 type hashTableBucket []BucketItem
 

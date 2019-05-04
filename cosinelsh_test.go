@@ -12,7 +12,7 @@ func Test_CosineLshQuery(t *testing.T) {
 	ls := []int{20, 5, 10, 25, 4}
 	ks := []int{5, 20, 10, 4, 25}
 	embs := randomEmbeddings(1000, 300, 1.0)
-	for j, _ := range ls {
+	for j := range ls {
 		var avg float64
 		clsh := NewCosineLsh(300, ls[j], ks[j])
 		insertedEmbs := make([]string, 1000)
@@ -44,7 +44,7 @@ func Test_CosineLshQueryShouldBeSortedByL2(t *testing.T) {
 	ls := []int{20, 5, 10, 25, 4}
 	ks := []int{5, 20, 10, 4, 25}
 	embs := randomEmbeddings(1000, 300, 1.0)
-	for j, _ := range ls {
+	for j := range ls {
 		var avg float64
 		clsh := NewCosineLsh(300, ls[j], ks[j])
 		insertedEmbs := make([]string, 1000)
