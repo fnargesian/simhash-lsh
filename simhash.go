@@ -9,8 +9,12 @@ type signature []uint8
 // Key is a way to index into a table.
 type hashTableKey []uint8
 
+type BucketItem struct {
+	Vector Point
+	ID string
+}
 // Value is an index into the input dataset.
-type hashTableBucket []string
+type hashTableBucket []BucketItem
 
 type hashTable map[uint64]hashTableBucket
 

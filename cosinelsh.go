@@ -1,9 +1,26 @@
 package simhashlsh
 
 import (
+	"fmt"
+	"sort"
 	"strconv"
 	"sync"
 )
+
+type Point []float64
+
+type DistanceFunc func(p1 Point, p2 Point) float64
+
+func EuclideanDistSquare(p1 Point, p2 Point) (sum float64) {
+	if len(p1) != len(p2) {
+		panic(fmt.Errorf("vectors should be same len. len(p1) = %v, len(p2) = %v", len(p1), len(p2)))
+	}
+	for i := range p1 {
+		d := p2[i] - p1[i]
+		sum += d * d
+	}
+	return sum
+}
 
 type cosineLshParam struct {
 	// Dimensionality of the input data.
@@ -16,6 +33,8 @@ type cosineLshParam struct {
 	hyperplanes [][]float64
 	// Number of hash functions
 	h int
+	// Func for calculate distance between vectors
+	dFunc DistanceFunc
 }
 
 // NewLshParams initializes the LSH settings.
@@ -26,6 +45,7 @@ func newCosineLshParam(dim, l, m, h int, hyperplanes [][]float64) *cosineLshPara
 		m:           m,
 		hyperplanes: hyperplanes,
 		h:           h,
+		dFunc:       EuclideanDistSquare,
 	}
 }
 
@@ -82,36 +102,53 @@ func (index *CosineLsh) Insert(point []float64, id string) {
 			if _, exist := table[hv]; !exist {
 				table[hv] = make(hashTableBucket, 0)
 			}
-			table[hv] = append(table[hv], id)
+			table[hv] = append(table[hv], BucketItem{Vector: point, ID: id})
 			wg.Done()
 		}(table, hv)
 	}
 	wg.Wait()
 }
 
+type distanceTuple struct {
+	id   string
+	dist float64
+}
+
 // Query finds the ids of approximate nearest neighbour candidates,
 // in un-sorted order, given the query point.
-func (index *CosineLsh) Query(q []float64) []string {
+func (index *CosineLsh) Query(q []float64) []BucketItem {
 	// Apply hash functions
 	hvs := index.toBasicHashTableKeys(index.hash(q))
 	// Keep track of keys seen
-	seen := make(map[string]bool)
+	seen := make(map[string]BucketItem)
 	for i, table := range index.tables {
 		if candidates, exist := table[hvs[i]]; exist {
 			for _, id := range candidates {
-				if _, exist := seen[id]; exist {
+				if _, exist := seen[id.ID]; exist {
 					continue
 				}
-				seen[id] = true
+				seen[id.ID] = id
 			}
 		}
 	}
-	// Collect results
-	ids := make([]string, 0, len(seen))
-	for id := range seen {
-		ids = append(ids, id)
+
+	distances := make([]distanceTuple, 0, len(seen))
+	// is it matrix on vector multiplication?
+	for key, value := range seen {
+		dist := index.dFunc(q, value.Vector)
+		distances = append(distances, distanceTuple{id: key, dist: dist})
 	}
-	return ids
+	sort.Slice(distances, func(i, j int) bool {
+		return distances[i].dist < distances[j].dist
+	})
+
+	// Collect results
+	values := make([]BucketItem, 0, len(seen))
+	for _, distProduct := range distances {
+		values = append(values, seen[distProduct.id])
+	}
+
+	return values
 }
 
 func (index *CosineLsh) toBasicHashTableKeys(keys []hashTableKey) []uint64 {
