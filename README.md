@@ -12,7 +12,7 @@ https://en.wikipedia.org/wiki/Locality-sensitive_hashing#Random_projection
 
 Use go tool to install the package in your packages tree:
 ```bash
-go get go get github.com/cogile/simhash-lsh
+go get github.com/cogile/simhash-lsh
 ```
 
 Import package as:
